@@ -1,0 +1,45 @@
+---
+title: "project"
+output: html_document
+---
+
+```{r}
+# reading data from YelpUsers-V2.csv
+yelp = read.csv("YelpUsers-V2.csv")
+# remove non-Elite members from dataset . If FirstEliteYear = 0, then those members are not Elite
+yelpElite = yelp[!(yelp$FirstEliteYear==0),]
+# converting YelpingSince column to date
+date = as.Date(yelpElite$YelpingSince,"%Y-%m-%d")
+# extracting year from the date using "format(date, "%Y")" and converting it into number
+yelpingSinceYear = as.numeric(format(date, "%Y"))
+# including yelpingSinceYear into data frame
+yelpYear = data.frame(yelpElite,yelpingSinceYear)
+# years taken to be Elite
+timeToElite = yelpYear$FirstEliteYear - yelpYear$yelpingSinceYear
+# including timeToElite into data frame
+yelpTimeToElite = data.frame(yelpYear,timeToElite)
+```
+
+**FITTING REGRESSION TREES**
+
+```{r}
+# using the tree library
+library(tree)
+# removing factor predictors
+yelpModified = yelpTimeToElite[,-c(1,2,3,4)]
+
+set.seed(1)
+train = sample(1:nrow(yelpModified), nrow(yelpModified)/2)
+
+# tree.yelp = tree(yelpTimeToElite$timeToElite~.-yelpTimeToElite$Id-yelpTimeToElite$Name-yelpTimeToElite$Country-yelpTimeToElite$YelpingSince-yelpTimeToElite$EliteYearCount-yelpTimeToElite$FirstEliteYear-yelpTimeToElite$LastEliteYear-yelpTimeToElite$yelpingSinceYear,yelpTimeToElite,subset = train)
+
+tree.yelpModified = tree(timeToElite ~.-EliteYearCount-FirstEliteYear-LastEliteYear-yelpingSinceYear,data = yelpModified,subset = train)
+
+summary(tree.yelpModified)
+
+plot(tree.yelpModified)
+text(tree.yelpModified,pretty = 0)
+
+
+```
+
